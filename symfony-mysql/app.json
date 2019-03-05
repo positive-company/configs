@@ -1,0 +1,42 @@
+{
+  "name": "Booster Symfony/MySQL Staging",
+  "stack": "heroku-18",
+  "env": {
+    "APP_DEBUG": {
+      "value": "false"
+    },
+    "APP_ENV": {
+      "value": "production"
+    },
+    "APP_LOG": {
+      "value": "errorlog"
+    },
+    "SECRET_KEY": {
+      "generator": "secret",
+      "description": "Symfony uses this value for encrypting the cookies used in the remember me functionality and for creating signed URIs when using ESI"
+    },
+    "COMPOSER_AUTH": {
+      "description": "Composer auth if nova needed."
+    }
+  },
+  "scripts": {
+    "postdeploy": "php bin/console doctrine:migrations:migrate --no-interaction"
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "free"
+    }
+  },
+  "addons": [
+    {
+      "plan": "jawsdb:kitefin",
+      "as": "DATABASE"
+    }
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/php"
+    }
+  ]
+}
