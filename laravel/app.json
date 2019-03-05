@@ -1,0 +1,44 @@
+{
+  "name": "Booster Laravel/Postgres Stagging",
+  "stack": "heroku-18",
+  "env": {
+    "APP_DEBUG": {
+      "value": "false"
+    },
+    "APP_ENV": {
+      "value": "production"
+    },
+    "APP_LOG": {
+      "value": "errorlog"
+    },
+    "APP_KEY": {
+      "description": "php artisan key:gen --show | pbcopy"
+    },
+    "COMPOSER_AUTH": {
+      "description": "Composer auth if nova needed."
+    },
+    "APP_URL": {
+      "description": "Full url of the app."
+    }
+  },
+  "scripts": {
+    "postdeploy": "php artisan migrate -f"
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "free"
+    }
+  },
+  "addons": [
+    "heroku-postgresql:hobby-dev"
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/php"
+    },
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+version: 2
+jobs:
+  build:
+    working_directory: /var/www/html
+    docker:
+      - image: composer
+    steps:
+      - checkout
+
+      - run:
+          name: Activate PHP Extensions
+          command: |
+            apk add --update postgresql-dev icu-dev
+            docker-php-ext-install pdo pdo_pgsql bcmath intl
+
+      - run:
+          name: Update composer
+          command: composer self-update
+
+      - restore_cache:
+          keys:
+            - composer-v1-{{ checksum "composer.lock" }}
+            - composer-v1-
+
+      - run:
+          name: Install vendors
+          command: composer install --prefer-dist --no-scripts --no-interaction
+
+      - save_cache:
+          key: composer-v1-{{ checksum "composer.lock" }}
+          paths:
+            - vendor
+
+      - run: chown -R 82:82 /var/www/html
+
+      - persist_to_workspace:
+          root: /var/www/html/
+          paths:
+            - ./*
+  lint:
+    working_directory: /var/www/html
+    docker:
+      - image: php:7.3-cli-alpine
+
+    steps:
+      - attach_workspace:
+          at: /var/www/html
+      - run:
+          name: Code Style
+          command: |
+            vendor/bin/phpcs --config-set ignore_warnings_on_exit 1
+            vendor/bin/phpcs
+
+
+  test:
+    working_directory: /var/www/html
+    docker:
+      - image: php:7.3-cli-alpine
+        environment:
+          DB_CONNECTION: pgsql
+      - image: postgres:9.6
+        environment:
+          POSTGRES_USER: root
+          POSTGRES_DB: local
+
+    steps:
+      - attach_workspace:
+          at: /var/www/html
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update postgresql-dev icu-dev
+            docker-php-ext-install pdo pdo_pgsql bcmath intl
+      - run:
+          name: Launch tests
+          command: vendor/bin/phpunit
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
+      - lint:
+          requires:
+            - build
