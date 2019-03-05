@@ -1,0 +1,13 @@
+language: sh
+
+before_deploy:
+  - zip -r laravel.zip laravel
+
+deploy:
+  provider: releases
+  api_key: ${API_KEY}
+  file_glob: true
+  file: "*.zip"
+  skip_cleanup: true
+  on:
+    tags: true
