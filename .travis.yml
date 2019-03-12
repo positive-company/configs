@@ -2,7 +2,7 @@ language: sh
 
 before_deploy:
   - zip -r laravel.zip laravel
-  - zip -r symfony-mysql.zip symfony-mysql.zip
+  - zip -r symfony-mysql.zip symfony-mysql
 
 deploy:
   provider: releases
