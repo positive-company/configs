@@ -73,6 +73,62 @@ jobs:
           name: Launch tests
           command: vendor/bin/phpunit
 
+  deploy-staging: &deploy-job
+    docker:
+      - image: circleci/node:dubnium
+        user: root
+    working_directory: ~/app
+
+    environment:
+      HEROKU_APP: my-app-staging
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install dpl
+          command: |
+            apt update
+            apt install ruby
+            gem install -N dpl
+
+      - run:
+          name: Install heroku cli
+          command: npm install -g heroku
+
+      - deploy:
+          name: Deploy to Heroku
+          command: dpl --provider=heroku --app=$HEROKU_APP --api-key=$HEROKU_API_KEY --skip-cleanup=true
+
+      - deploy:
+          name: Run migrations
+          command: heroku run --exit-code bin/console doctrine:migrations:migrate -n --allow-no-migration
+
+
+  deploy-preprod:
+    <<: *deploy-job
+    environment:
+      HEROKU_APP: my-app-preprod
+
+
+  deploy-prod:
+    <<: *deploy-job
+    environment:
+      HEROKU_APP: my-app-prod
+
+
+filter-staging: &filter-staging
+  filters:
+    branches:
+      only: master
+
+filter-preprod-prod: &filter-preprod-prod
+  filters:
+    branches:
+      ignore: /.*/
+    tags:
+      only: /\d+\.\d+\.\d+/
+
 workflows:
   version: 2
   test:
@@ -84,3 +140,27 @@ workflows:
       - lint:
           requires:
             - build
+
+  deploy-staging:
+    jobs:
+      - deploy-staging:
+          <<: *filter-staging
+
+  deploy:
+    jobs:
+      - hold_preprod:
+          <<: *filter-preprod-prod
+          type: approval
+      - deploy-preprod:
+          <<: *filter-preprod-prod
+          requires:
+            - hold_preprod
+      - hold_prod:
+          <<: *filter-preprod-prod
+          type: approval
+          requires:
+            - deploy-preprod
+      - deploy-prod:
+          <<: *filter-preprod-prod
+          requires:
+            - hold_prod
