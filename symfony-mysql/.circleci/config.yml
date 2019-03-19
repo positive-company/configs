@@ -102,7 +102,7 @@ jobs:
 
       - deploy:
           name: Run migrations
-          command: heroku run bin/console doctrine:migrations:migrate -n --allow-no-migration
+          command: heroku run --exit-code bin/console doctrine:migrations:migrate -n --allow-no-migration
 
 
   deploy-preprod:
