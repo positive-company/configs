@@ -1,0 +1,141 @@
+version: 2
+
+# Definition of the jobs
+jobs:
+  # Ajouter les jobs de tests ci-dessous.
+
+
+  # Utiliser ce job si il n'y a pas de pré-requis sur l'exécution de commandes
+  # depuis l'environnement Heroku (via Heroku CLI).
+  deploy-staging: &deploy-job
+    docker:
+      - image: circleci/ruby
+        user: root
+    working_directory: /app
+
+    environment:
+      HEROKU_APP: my-app-staging
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install dpl
+          command: |
+            gem install -N dpl
+
+      - run:
+          name: Deploy to Heroku
+          command: dpl --provider=heroku --app=$HEROKU_APP --api-key=$HEROKU_API_KEY --skip-cleanup=true
+
+
+  # Utiliser ce job si il y a besoin de lancer des commandes via Heroku CLI
+  # (migrations, etc.).
+  deploy-staging: &deploy-job
+    docker:
+      - image: circleci/node:dubnium
+        user: root
+    working_directory: /app
+
+    environment:
+      HEROKU_APP: my-app-staging
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install dpl
+          command: |
+            apt update
+            apt install ruby
+            gem install -N dpl
+
+      - run:
+          name: Deploy to Heroku
+          command: dpl --provider=heroku --app=$HEROKU_APP --api-key=$HEROKU_API_KEY --skip-cleanup=true
+
+      # La ligne de commande à exécuter va ici.
+      # L'utilisation de `--exit-code` permet de remonter le code d'erreur dans
+      # CircleCI et de marquer la commande comme failed si cela échoue
+      # dans Heroku CLI.
+      - run:
+          name: Run commands on Heroku
+          command: heroku run --exit-code echo "Your command goes here"
+
+
+  # Les jobs suivants partent du principe que le déploiement des environnements
+  # de Préproduction et de Production sont similaires au déploiement de
+  # l'environnement Staging à l'exception de l'application HEROKU (stockée dans
+  # la variable HEROKU_APP).
+  deploy-preprod:
+    <<: *deploy-job
+    environment:
+      HEROKU_APP: my-app-preprod
+
+  deploy-prod:
+    <<: *deploy-job
+    environment:
+      HEROKU_APP: my-app-prod
+
+# Les lignes suivantes définissent les filtres pour le déploiement des
+# environnements.
+
+# Staging est déployée lorsque master est mise à jour.
+filter-staging: &filter-staging
+  filters:
+    branches:
+      only: master
+
+# La Préproduction et la Production sont mises à jour lorsqu'un tag est poussé.
+filter-preprod-prod: &filter-preprod-prod
+  filters:
+    branches:
+      ignore: /.*/
+    tags:
+      only:
+        /\d+\.\d+\.\d+/
+
+
+# Definition des différents workflows.
+workflows:
+  version: 2
+
+  # Définition du workflow de tests.
+  test:
+    jobs:
+    # Les différents jobs vont ici.
+    # Se référer à la documentation ou aux autres configurations pour
+    # construire le workflow de tests.
+
+  # Ce workflow définit le déploiement de l'environnement Staging en suivant
+  # les filtres définis précédemment.
+  deploy-staging:
+    jobs:
+      - deploy-staging:
+          <<: *filter-staging
+
+  # Ce workflow définit le déploiement des environnements de Préproduction et
+  # de Production en suivant les filtres définis précédemment.
+  #
+  # Avant chaque déploiement, le job est mis en attente et requiert une
+  # confirmation manuelle via le dashboard CircleCI.
+  #
+  # L'environnement de Préproduction est déployé avant celui de Production. Si
+  # le déploiement de Préproduction échoue, le job de déploiement en Production
+  # est annulé.
+  deploy:
+    jobs:
+      - hold_preprod:
+          <<: *filter-preprod-prod
+          type: approval
+      - deploy-preprod:
+          <<: *filter-preprod-prod
+          requires:
+            - hold_preprod
+      - hold_prod:
+          <<: *filter-preprod-prod
+          type: approval
+      - deploy-prod:
+          <<: *filter-preprod-prod
+          requires:
+            - hold_prod
