@@ -2,6 +2,7 @@ language: sh
 
 before_deploy:
   - zip -r laravel.zip laravel
+  - zip -r nodejs-spa.zip nodejs-spa
   - zip -r symfony-mysql.zip symfony-mysql
 
 deploy:
