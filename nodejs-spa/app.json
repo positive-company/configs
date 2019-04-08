@@ -1,0 +1,24 @@
+{
+  "name": "Booster NodeJS Single Page App Staging",
+  "stack": "heroku-18",
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "scripts": {
+
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "free"
+    }
+  },
+  "addons": [
+
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}
