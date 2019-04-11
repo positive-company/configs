@@ -25,6 +25,27 @@ pipeline par défaut tel que décrit dans la documentation sur Notion.
 Ainsi, il est recommandé de valider les différents fichiers et de les modifier
 en fonction des besoins de l'application.
 
+## Configuration avancée
+
+Pour un projet divisée en deux applications, il est possible de passer par de
+la configuration Nginx complémentaire pour gérer le partager de ressource
+inter-sites (`CORS`).
+
+Pour cela, le fichier de configuration `nginx-heroku.conf` est disponible à la
+racine du projet avec une configuration de base pour gérer les CORS.
+
+Ce fichier de configuration est activé par défaut. Pour le désactiver, il
+suffit de modifier le fichier Procfile :
+
+```
+web: vendor/bin/heroku-php-nginx public/
+```
+
+Toute cette configuration a été écrite en suivant ce qui est décrit dans la
+documentation : https://devcenter.heroku.com/articles/custom-php-settings#nginx-defaults
+ainsi que de la configuration par défaut de Nginx via le buildpack Heroku PHP :
+https://github.com/heroku/heroku-buildpack-php/tree/master/conf/nginx.
+
 ## Les actions à effectuer
 
 Une fois que les fichiers ont été modifiés conformément aux besoins de
