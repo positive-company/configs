@@ -1,0 +1,22 @@
+{
+  "name": "My app Staging.",
+  "stack": "heroku-18",
+  "env": {
+
+  },
+  "scripts": {
+
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "free"
+    }
+  },
+  "addons": [
+
+  ],
+  "buildpacks": [
+
+  ]
+}
