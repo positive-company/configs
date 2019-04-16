@@ -1,0 +1,41 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "extends": ["airbnb", "plugin:@typescript-eslint/recommended"],
+  "plugins": ["@typescript-eslint/eslint-plugin"],
+  "env": {
+    "browser": true,
+    "node": true,
+    "jest": true
+  },
+  "globals": {
+    "__SERVER_SIDE__": true,
+  },
+  "rules": {
+    "max-len": ["error", 120],
+    "react/jsx-filename-extension": ["error", { "extensions": [".tsx", ".jsx"] }],
+    "@typescript-eslint/indent": ["error", 2],
+    "@typescript-eslint/no-var-requires": "off",
+    "@typescript-eslint/prefer-interface": "off",
+    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "import/no-extraneous-dependencies": ["error", {
+      "devDependencies": [
+        "**/*.test.js",
+        "**/*.spec.{js,ts,tsx,jsx}",
+        "scripts/**/*.js",
+        "tests/**/*.js",
+        "webpack.config.js",
+        "packages/storybook/**/*.{js,jsx,ts,tsx}"
+      ]
+    }],
+    "no-underscore-dangle": ["error", { "allow": ["__shouldHydrate", "__SERVER_SIDE__"] }],
+    "no-console": "error",
+    "object-curly-newline":"off",
+    "jsx-a11y/label-has-for": "off"
+  },
+  "settings": {
+    "import/resolver": {
+      "node": { "extensions": [".js", ".jsx", ".mjs", ".json", ".ts", ".tsx"] }
+    }
+  }
+}

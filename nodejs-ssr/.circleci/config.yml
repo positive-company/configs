@@ -1,0 +1,143 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: node
+    working_directory: ~/app
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - node-modules-{{ checksum "yarn.lock" }}
+            - node-modules-
+
+      - run:
+          name: Install dependencies
+          command: yarn install
+
+      - save_cache:
+          key: node-modules-{{ checksum "yarn.lock" }}
+          paths:
+            - ./node_modules
+
+      - persist_to_workspace:
+          root: ~/app
+          paths:
+            - ./*
+
+
+  test:
+    docker:
+      - image: circleci/node
+    working_directory: ~/app
+
+    steps:
+      - attach_workspace:
+          at: ~/app
+
+      - run:
+          name: Launch tests
+          command: yarn test:ci
+
+      - store_test_results:
+          path: reports/
+
+
+  lint:
+    docker:
+      - image: circleci/node
+    working_directory: ~/app
+
+    steps:
+      - attach_workspace:
+          at: ~/app
+
+      - run:
+          name: Launch lint
+          command: yarn run lint
+
+
+  deploy-staging: &deploy-job
+    docker:
+      - image: circleci/ruby
+        user: root
+    working_directory: /app
+
+    environment:
+      HEROKU_APP: my-app-staging
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install dpl
+          command: |
+            gem install -N dpl
+
+      - run:
+          name: Deploy to Heroku
+          command: dpl --provider=heroku --app=$HEROKU_APP --api-key=$HEROKU_API_KEY --skip-cleanup=true
+
+
+  deploy-preprod:
+    <<: *deploy-job
+    environment:
+      HEROKU_APP: my-app-preprod
+
+  deploy-prod:
+    <<: *deploy-job
+    environment:
+      HEROKU_APP: my-app-prod
+
+
+filter-staging: &filter-staging
+  filters:
+    branches:
+      only: master
+
+filter-preprod-prod: &filter-preprod-prod
+  filters:
+    branches:
+      ignore: /.*/
+    tags:
+      only:
+        /\d+\.\d+\.\d+/
+
+
+workflows:
+  version: 2
+
+  test:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
+      - lint:
+          requires:
+            - build
+
+  deploy-staging:
+    jobs:
+      - deploy-staging:
+          <<: *filter-staging
+
+  deploy:
+    jobs:
+      - hold_preprod:
+          <<: *filter-preprod-prod
+          type: approval
+      - deploy-preprod:
+          <<: *filter-preprod-prod
+          requires:
+            - hold_preprod
+      - hold_prod:
+          <<: *filter-preprod-prod
+          type: approval
+      - deploy-prod:
+          <<: *filter-preprod-prod
+          requires:
+            - hold_prod
