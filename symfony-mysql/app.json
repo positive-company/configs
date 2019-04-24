@@ -16,11 +16,9 @@
       "description": "Symfony uses this value for encrypting the cookies used in the remember me functionality and for creating signed URIs when using ESI"
     },
     "COMPOSER_AUTH": {
-      "description": "Composer auth if nova needed."
+      "description": "Composer auth if external components required.",
+      "required": false
     }
-  },
-  "scripts": {
-    "postdeploy": "php bin/console doctrine:migrations:migrate --no-interaction"
   },
   "formation": {
     "web": {
