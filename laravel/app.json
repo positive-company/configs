@@ -15,14 +15,12 @@
       "description": "php artisan key:gen --show | pbcopy"
     },
     "COMPOSER_AUTH": {
+      "required": false,
       "description": "Composer auth if nova needed."
     },
     "APP_URL": {
       "description": "Full url of the app."
     }
-  },
-  "scripts": {
-    "postdeploy": "php artisan migrate -f"
   },
   "formation": {
     "web": {
